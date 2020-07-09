@@ -1,0 +1,285 @@
+{% extends "base.html" %}
+
+{% block title %}Compare{% endblock %}
+
+{% block scripts %}
+{{super()}}
+
+<script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+
+<script type="text/javascript">	
+	google.charts.load('current', {'packages':['line', 'bar', 'corechart']});
+	google.charts.setOnLoadCallback(drawQualityChangeOverTimeChart);
+	google.charts.setOnLoadCallback(drawLOCChart);
+	google.charts.setOnLoadCallback(drawContributorsChart);
+	google.charts.setOnLoadCallback(drawChangeFreqChart);
+
+	function drawQualityChangeOverTimeChart() {
+		var data = new google.visualization.DataTable();
+		data.addColumn('number', 'X');
+		data.addColumn('number', 'Average Quality Change');
+		
+		var mydata = '{{quality_change_over_time|tojson}}';
+		mydata = JSON.parse(mydata);
+
+		rows = [];
+		totals = [0,0,0,0,0];
+
+		Object.keys(mydata).forEach(function(key) {
+			for (pos = 0; pos < 5; pos++) { 
+				totals[pos] += mydata[key][pos]
+			}
+		});
+		
+		num_repos = Object.keys(mydata).length;
+
+		for (pos = 0; pos < 5; pos++) {
+			rows.push([pos+1, totals[pos]/num_repos]);
+		}
+
+		data.addRows(rows);
+
+		var options = {
+			title: 'Quality over Time',
+			hAxis: {
+				title: 'Time (Repository Version)',
+				format: '0'
+			},
+			vAxis: {
+				title: 'Average Quality Change'
+			},
+		};
+
+		var chart = new google.visualization.LineChart(document.getElementById('quality_change'));
+
+		chart.draw(data, options);
+	}
+
+	function drawLOCChart() {
+		var data = new google.visualization.DataTable();
+		data.addColumn('number', 'Total Lines of Code Added (since version 1)');
+		data.addColumn('number', 'Average QS');
+		
+		var locdata = '{{code_sizes|tojson}}';
+		locdata = JSON.parse(locdata);
+
+		rows = [];
+		loc_totals = [0,0,0,0,0];
+
+		for (repo = 0; repo < locdata.length; repo++) { 
+			for (version = 0; version < 5; version++) { 
+				loc_totals[version] += locdata[version]
+			}
+		}
+
+		var quality_scores = '{{quality_scores|tojson}}';
+		quality_scores = JSON.parse(quality_scores);
+
+		qs_totals = [0,0,0,0,0];
+
+		Object.keys(quality_scores).forEach(function(key) {
+			for (pos = 0; pos < 5; pos++) { 
+				qs_totals[pos] += quality_scores[key][pos]
+			}
+		});
+
+		num_repos = Object.keys(quality_scores).length;
+
+		for (pos = 0; pos < 5; pos++) { 
+			rows.push([loc_totals[pos], qs_totals[pos]/num_repos]);
+		}
+
+		data.addRows(rows);
+
+		var options = {
+			title: 'Quality vs Code Size (LOC)',
+			hAxis: {
+				title: 'Aggregate Change in LOC'
+			},
+			vAxis: {
+				title: 'Average Quality Score'
+			},
+		};
+
+		var chart = new google.visualization.LineChart(document.getElementById('loc_chart'));
+		chart.draw(data, options);
+	}
+
+	function drawContributorsChart () {
+		var mydata = '{{quality_vs_contributors|tojson}}';
+		mydata = JSON.parse(mydata);
+		console.log(mydata);
+		rows = [['Total Contributors', 'Median Quality Score']];
+
+		for (var i = 0; i < mydata[0].length; i++) {
+			rows.push([mydata[0][i], mydata[1][i]]);
+		}
+
+		var data = google.visualization.arrayToDataTable(rows);
+
+		var options = {
+
+			title: 'Quality vs Contributors',
+			hAxis: {title: 'Contributors'},
+			vAxis: {title: 'Quality Score'},
+			legend: 'none',
+			trendlines: {
+				0: {
+					type: 'polynomial',
+					degree: 1,
+					visibleInLegend: true,
+				}
+			},
+			width: 800,
+			height: 500
+		};
+
+		var chart = new google.visualization.ScatterChart(document.getElementById('contributors_chart'));
+		chart.draw(data, options);
+	}
+
+	function drawChangeFreqChart () {
+		var mydata = '{{quality_vs_change_freq|tojson}}';
+		mydata = JSON.parse(mydata);
+		rows = [['Average Commits per Month', 'Median Quality Score']];
+
+		// change_freqs_length = mydata[0].length;
+		// quality_changes_length = mydata[1].length;
+
+		for (var i = 0; i < mydata[0].length; i++) {
+			rows.push([mydata[0][i], mydata[1][i]]);
+		}
+		var data = google.visualization.arrayToDataTable(rows);
+
+		var options = {
+
+			title: 'Quality vs Change Frequency',
+			hAxis: {title: 'Average Commits per Month'},
+			vAxis: {title: 'Median Quality Score'},
+			legend: 'none',
+			trendlines: {
+				0: {
+					type: 'polynomial',
+					degree: 1,
+					visibleInLegend: true,
+				}
+			},
+			width: 800,
+			height: 500
+		};
+
+		var chart = new google.visualization.ScatterChart(document.getElementById('change_freq_chart'));
+		chart.draw(data, options);
+	}
+
+	$(window).resize(function(){
+		drawQualityChangeOverTimeChart();
+		drawLOCChart();
+		drawContributorsChart();
+		drawChangeFreqChart();
+	});
+</script>
+
+{% endblock %}
+
+{% block styles %}
+{{super()}}
+<style type="text/css">
+	.chart{
+		width: 100%; 
+		padding: 2rem;
+		border: 1px solid #565656;
+		border-radius: 1%;
+		background-color: #fff;
+		z-index: 1;
+		text-align: center;
+	}
+
+	.chart * {z-index: 1; position: relative;}
+
+	.correlation{
+		margin-top: 10px;
+	}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+
+	<h2>Compare:</h2>
+	<h6 class="text-muted">{{ quality_scores.keys()|join(', ') }}</h6>
+	<br>
+	<br>
+
+	{% if quality_change_over_time or quality_scores %}
+	<center><h5>Quality over Time</h5></center><br>
+	{% endif %}
+
+	{% if quality_change_over_time %}
+	<div class="row" style="margin:0 !important;">
+		<div class="col">
+			<div class="chart">
+				<center><div id="quality_change" style="min-height:400px; min-width: 356px;"></div></center>
+				<hr>
+				<h6 class="correlation"><!-- Spearman's  -->Correlation Coefficient: {{ '%0.4f' % quality_over_time_correlation[0] }} <br><small>(p-value ~ {{ '%0.5f' % 	quality_over_time_correlation[1] }})</small></h6>
+			</div>
+		</div>
+	</div>
+	<br>
+	{% endif %}
+
+	{% if code_sizes %}
+	<center><h5>Quality vs Code Size</h5></center><br>
+	{% endif %}
+
+	{% if code_sizes %}
+	<div class="row" style="margin:0 !important;">
+		<div class="col">
+			<div class="chart">
+				<center><div id="loc_chart" style="min-height:400px; min-width: 356px;"></div></center>
+				<hr>
+				<h6 class="correlation"><!-- Pearson's --> Correlation Coefficient: {{ '%0.4f' % quality_vs_code_size_correlation[0] }} <br><small>(p-value ~ {{ '%0.5f' % 	quality_vs_code_size_correlation[1] }})</small></h6>
+			</div>
+		</div>
+	</div>
+	<br>
+	{% endif %}
+
+	{% if quality_vs_contributors %}
+	<center><h5>Quality vs Contributors</h5></center><br>
+	{% endif %}
+
+	{% if quality_vs_contributors %}
+	<div class="row" style="margin:0 !important;">
+		<div class="col">
+			<div class="chart">
+				<center><div id="contributors_chart" style="min-height:400px; min-width: 356px;"></div></center>
+				<hr>
+				<h6 class="correlation"><!-- Pearson's  -->Correlation Coefficient: {{ '%0.4f' % quality_vs_contributors_correlation[0] }} <br><small>(p-value ~ {{ '%0.5f' % 	quality_vs_contributors_correlation[1] }})</small></h6>
+			</div>
+		</div>
+	</div>
+	<br>
+	{% endif %}
+
+	{% if quality_vs_change_freq %}
+	<center><h5>Quality vs Change Frequency</h5></center><br>
+	{% endif %}
+
+	{% if quality_vs_change_freq %}
+	<div class="row" style="margin:0 !important;">
+		<div class="col">
+			<div class="chart">
+				<center><div id="change_freq_chart" style="min-height:400px; min-width: 356px;"></div></center>
+				<hr>
+				<h6 class="correlation"><!-- Pearsons --> Correlation Coefficient: {{ '%0.4f' % quality_vs_change_freq_correlation[0] }} <br><small>(p-value ~ {{ '%0.5f' % quality_vs_change_freq_correlation[1] }})</small></h6>
+			</div>
+		</div>
+	</div>
+	<br>
+	{% endif %}
+
+	<br>
+</div>
+
+{% endblock %}

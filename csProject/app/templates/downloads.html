@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+
+{% block title %}Downloads{% endblock %}
+
+{% block styles %}
+{{super()}}
+<style type="text/css">
+	a.custom-card,
+	a.custom-card:hover {
+		color: inherit;
+	}
+
+	.zoom {
+		z-index: 1;
+		transition: transform .2s; /* Animation */
+	}
+	.zoom:hover {
+		transform: scale(1.1);
+	} 
+</style>
+{% endblock %}
+
+{% block scripts %}
+{{super()}}
+	<script src="{{ url_for('static', filename='js/waitdialog.js') }}"></script>
+
+{% endblock %}
+
+{% block content %}
+<div class="container">
+	<h2>Downloads</h2>
+	<button id="compare" class="btn btn-success btn-sm sub-on-enter" onclick="sendData();" style="float: right; margin-right: 10px;">Compare Selected</button>
+	<button class="btn btn-success btn-sm sub-on-enter" style="float: right; margin-right: 10px;" onclick="selectAll();">Compare All</button>
+	<small class="text-muted">Please select one or more repositories.</small><br><br>
+
+	{% if repositories %}
+		<center>
+
+			<div class="row">
+				{% for repo in repositories %}
+					<div class="col-md-3 repo all {{ repo.language|lower }}" style="cursor: pointer;">
+						<a id="a_{{ repo.github_slug }}" onclick="select('{{ repo.github_slug }}');" class="custom-card">
+							<div id="{{ repo.github_slug }}" class="card shadow-sm my-3 zoom">
+								<div class="card-body">
+									<h5 class="card-title">{{ repo.name }}</h5>
+									<span><i class="fas fa-laptop-code fa-5x"></i></span>
+								</div>
+							</div>
+						</a>
+					</div>
+				{% endfor %}
+			</div>
+		</center>
+
+	{% endif %}
+
+</div>
+
+<form style="display: hidden" action="{{url_for('main.compare')}}" method="POST" id="form">
+  <input type="hidden" id="selected" name="selected" value=""/>
+</form>
+
+<script>
+	var selected = [];
+
+	function select(github_slug){
+		if (selected.includes(github_slug)) {
+			deselect(github_slug);
+			return;
+		}
+		selected.push(github_slug);
+		console.log(selected);
+		document.getElementById(github_slug).style.backgroundColor = "lightgreen";
+	}
+
+	function deselect(github_slug){
+		selected.splice(selected.indexOf(github_slug), 1)
+		console.log(selected);
+		document.getElementById(github_slug).style.backgroundColor = "white";
+	}
+
+	function selectAll(){
+		selected = []; // deselect any already selected repos
+		els = document.getElementsByClassName('card shadow-sm my-3 zoom');
+		Array.prototype.forEach.call(els, function(el) {
+			selected.push(el.id);
+		});
+		sendData();
+	}
+
+	var sendData = function() {
+		if (selected.length > 1){
+			waitingDialog.show();
+			$("#selected").val(selected);
+			$("#form").submit();
+		} else if (selected.length == 1){
+			waitingDialog.show();
+			var repo_name = selected[0].split('/')[1];
+			window.location.href = '/analyse_all/' + repo_name;
+		} else {
+			alert("Please select one or more repositories.");
+		}
+	}
+</script>
+{% endblock %}

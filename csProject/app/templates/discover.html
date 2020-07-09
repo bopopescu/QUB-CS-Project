@@ -1,0 +1,123 @@
+{% extends "base.html" %}
+
+{% block title %}Discover{% endblock %}
+
+
+{% block scripts %}
+{{super()}}
+{% endblock %}
+
+{% block styles %}
+{{super()}}
+<style type="text/css">
+	.pagination-page-info {
+    padding: .6em;
+    padding-left: 0;
+    width: 40em;
+    margin: .5em;
+    margin-left: 0;
+    font-size: 12px;
+}
+.pagination-page-info b {
+    color: black;
+    background: #6aa6ed;
+    padding-left: 2px;
+    padding: .1em .25em;
+    font-size: 150%;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    	
+	<h2>Discover</h2>
+
+	<h6>Filters:</h6>
+	<button class="btn btn-primary btn-sm sub-on-enter" style="float: right;" onclick="copySelected();">Copy Selected URLs</button>
+	<button class="btn btn-primary btn-sm sub-on-enter" style="float: right; margin-right: 10px;" onclick="copyAll();">Copy All</button>
+
+	{% set min_size = filters['min_size']|int %}
+	{% set max_size = filters['max_size']|int %}
+	<h6 class="text-muted">language: {{ filters['language']|capitalize() }} | size: {{ min_size/1000 }}MB - {{ max_size/1000 }}MB | created before: {{ filters['created_before'] }} | updated after: {{ filters['updated_after'] }}</h6>
+	<a href="{{ url_for('main.discover_filters') }}">Change filters</a>
+	<br>
+	<br>
+
+	{% if repositories %}
+	<h6>Select Repositories:</h6>
+	<div class="row">
+		{% for slug,url in repositories.iteritems() %}
+			<div class="col-md-3" style="cursor: pointer;">
+				<a onclick="select('{{ url }}');" class="custom-card">
+					<div id="{{url}}" class="card flex-md-row mb-4 shadow-sm h-md-250 highlight">
+						<div class="card-body d-flex flex-column align-items-center">
+							{% set owner, name = slug.split('/') %}
+							<strong class="d-inline-block mb-2">{{ owner | wordwrap(25) }}:</strong>
+							<strong class="d-inline-block mb-2">{{ name | wordwrap(25) }}</strong>
+							
+						</div>
+					</div>
+				</a>
+			</div>
+		{% endfor %}
+	</div>
+
+	{% endif %}
+
+</div>
+
+<script type="text/javascript">
+	var selected = [];
+
+	function select(url){
+		if (selected.includes(url)) {
+			deselect(url);
+			return;
+		}
+		selected.push(url);
+		document.getElementById(url).classList.add("selected_repo");
+		document.getElementById(url).style.backgroundColor = "lightgreen";
+	}
+
+	function deselect(url){
+		selected.splice(selected.indexOf(url), 1)
+		document.getElementById(url).classList.remove("selected_repo");
+		document.getElementById(url).style.backgroundColor = "white";
+	}
+
+	function copySelected(){
+		var $temp = $("<input>");
+		$("body").append($temp);
+
+		var textarea = document.createElement("textarea");
+	    textarea.style.position = "fixed";  
+	
+		els = document.getElementsByClassName('selected_repo');
+		Array.prototype.forEach.call(els, function(el) {
+			textarea.textContent += el.id + ',';
+		});
+	
+	    document.body.appendChild(textarea);
+	    // cut off last comma delimeter
+		textarea.textContent = textarea.textContent.substring(0, textarea.textContent.length - 1);;
+	    textarea.select();
+		document.execCommand("copy");
+		textarea.remove();
+		alert("Copied!");
+	}
+
+	function copyAll(){
+		els = document.getElementsByClassName('card flex-md-row mb-4 shadow-sm h-md-250');
+		Array.prototype.forEach.call(els, function(el) {
+			el.classList.add("selected_repo");
+		});
+		copySelected();
+		els = document.getElementsByClassName('card flex-md-row mb-4 shadow-sm h-md-250');
+		Array.prototype.forEach.call(els, function(el) {
+			el.classList.remove("selected_repo");
+		});
+	}
+</script>
+
+{% endblock %}						

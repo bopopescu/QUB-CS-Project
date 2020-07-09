@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% import "bootstrap/wtf.html" as wtf %}
+{% block title %}Change Language{% endblock %}
+
+{% block styles %}
+{{super()}}
+{% endblock %}
+
+{% block scripts %}
+{{super()}}
+{% endblock %}
+
+{% block content %}
+<div class="container">
+	<h2>Change Language</h2>
+	<small class="text-muted">The current language for this repository is <b>{{ old_language }}</b>. Enter the correct language in the form below to change it.</small>
+	<br>
+	<br>
+
+	<center>
+		<form id="form" method="POST" class="simple-form" action="{{ url_for('main.change_language', repo = request.args.get('repo'), timestamp = request.args.get('timestamp'))}}" style="width: 75%">
+			{{ form.csrf_token }}
+			<div id="form" class="input-group mb-3">
+				<div class="input-group-prepend">
+					<div class="input-group-text">New Language:</div>
+				</div>
+				<input type="text" name="new_language" class="form-control" placeholder="e.g. Java, C#, etc.">
+				<div class="input-group-append">
+					<button class="btn btn-success" type="submit">Submit</button> 
+				</div>
+			</div>
+		</form>
+	</center>
+
+</div>
+{% endblock %}

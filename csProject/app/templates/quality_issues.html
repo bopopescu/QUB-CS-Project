@@ -1,0 +1,212 @@
+{% extends "base.html" %}
+{% block title %}Code Smells{% endblock %}
+
+{% block styles %}
+{{super()}}	
+<style type="text/css">
+	body {
+		background-color: #fff!important;
+	}
+	.highlight1 {
+		font-family: Lato;
+		font-size: 48px;
+		margin-bottom: 1rem;
+	}
+	.highlight2 {
+		font-family: Lato;
+		font-size: 36px;
+		margin-bottom: 0px;
+	}
+	.highlight3 {
+		font-family: Lato;
+		font-size: 24px;
+	}
+	.highlight4 {
+		font-family: Lato;
+		font-size: 18px;
+		color: #6c757d;
+		margin-bottom: 1rem;
+	}
+	.jumbotron {
+		border: 1px solid black;
+		padding: 32px;
+	}
+
+	.info {
+		font-weight: bold;
+		color: royalblue;
+	}
+	.minor {
+		font-weight: bold;
+		color: darkorange;
+	}
+	.major {
+		font-weight: bold;
+		color: orangered;
+	}
+	.critical {
+		font-weight: bold;
+		color: red;
+	}
+	.blocker {
+		font-weight: bold;
+		color: darkred;
+	}
+</style>
+{% endblock %}
+
+{% block scripts %}
+{{super()}}
+{% endblock %}
+
+{% block content %}
+<div class="container">
+	<center><h2>Code Smells</h2></center>
+	<br>
+	
+	<section class="jumbotron">
+		<div class="container">
+			<h3 class="jumbotron-header">Overview</h3>
+
+			<div class="row row-eq-height">
+				<div class="col-4">
+					<h4 class="highlight1">
+						{{ summary_data['files_with_issues'] }}<small class="text-muted"> FILES</small>
+					</h4>
+
+					{% set vars = {'issues': False, 'category': False, 'type': False, 'print_counter': 0, 'break': False} %}
+
+					<h4 class="highlight2">Issues</h4>
+					<h4 class="highlight3">
+
+						{% for type in [('info','royalblue'), ('minor','darkorange'), ('major', 'orangered'), ('critical', 'red'), ('blocker','darkred')] %}
+
+							{% set count = summary_data['severity'][type[0]] %}
+							{% if count %} 
+								{% if vars.update({'issues': True}) %}{% endif %}  {# if statement is required to update nested jinja variables #}
+								{{count}} <small class="text-muted" style="color: {{type[1]}}!important;"> {{type[0]|upper()}}</small>&nbsp;&nbsp;
+							{% endif %}
+						
+						{% endfor %}
+
+						{% if not vars.issues %}
+							<small class="text-muted">None</small>
+						{% endif %}		
+					</h4>
+				</div>
+
+				<div class="col-4">
+					<h4 class="highlight2">Categories</h4>
+					<h4 class="highlight4">
+					
+					{% set total = summary_data['category'].keys()|length %}
+					{% if vars.update({'break': False}) %}{% endif %}
+
+					{% for category, count in summary_data['category'] | dictsort(false, 'value')|reverse %}
+						
+						{% if not vars.break %}
+							{% if vars.update({'print_counter': loop.index}) %}{% endif %}
+							{% if vars.print_counter <= 3 %} 	{# only print top 3 categories #}
+								{{ category|capitalize() }}{% if vars.print_counter < 3 and vars.print_counter < total  %},{% endif %}
+							{% else %}
+								{% if vars.update({'break': True}) %}{% endif %}
+								 and {{ total-3 }} more 
+							{% endif %} 
+						{% endif %} 
+					
+					{% else %}
+						<small class="text-muted">None</small>
+					{% endfor %}
+
+					</h4>
+
+					<h4 class="highlight2">Types</h4>
+					<h4 class="highlight4">
+					
+					{% set total = summary_data['type'].keys()|length %}
+					{% if vars.update({'break': False}) %}{% endif %}
+
+					{% for type, count in summary_data['type'] | dictsort(false, 'value')|reverse %}
+
+						{% if not vars.break %}
+							{% if vars.update({'print_counter': loop.index}) %}{% endif %}
+							{% if vars.print_counter <= 3 %} 	{# only print top 3 issue types #}
+								{{ type|capitalize() }}{% if vars.print_counter < 3 and vars.print_counter < total  %},{% endif %}
+							{% else %}
+								{% if vars.update({'break': True}) %}{% endif %}
+								 and {{ total-3 }} more 
+							{% endif %} 
+						{% endif %} 
+					
+					{% else %}
+						<small class="text-muted">None</small>
+					{% endfor %}
+
+					</h4>
+				</div>
+
+				<div class="col-4">
+					<h4 class="highlight3" style="margin-bottom: 0px;">Maintainability</h4>
+					<a href="https://codeclimate.com/github/{{cc_data['github_slug']}}/maintainability"><img src="https://api.codeclimate.com/v1/badges/{{cc_data['badge_token']}}/maintainability" /></a>
+
+					<br><br>
+					
+					<h4 class="highlight3" style="margin-bottom: 0px;">Test Coverage</h4>
+					<a href="https://codeclimate.com/github/{{cc_data['github_slug']}}/test_coverage"><img src="https://api.codeclimate.com/v1/badges/{{cc_data['badge_token']}}/test_coverage" /></a>
+				</div>
+
+			</div>
+		</div>
+	</section>
+
+
+	<h3>Code Smells</h3>
+	{% set my_own_order = ['info', 'minor', 'major', 'critical', 'blocker'] %}
+	{% set order = {'info': 2, 'minor': 1, 'major': 2, 'critical': 3, 'blocker': 4} %}
+	{% set vars = {'count': 0} %}
+
+	<div class="accordion" id="accordion">
+		{% for file in issue_data %}
+		{% if vars.update({'count': vars.count+1}) %} {% endif %}
+		<div class="card" id="{{file}}" style="border-radius: 4px;">
+
+			<div class="card-header">
+				<h5 class="mb-0">
+					<button class="btn btn-link" type="button" data-toggle="collapse" data-target="#collapse{{vars.count}}" aria-expanded="true" aria-controls="collapse1" style="color: black;">
+						{{file}}
+					</button>
+				</h5>
+			</div>
+
+			<div class="container">
+				<div id="collapse{{vars.count}}" class="collapse" aria-labelledby="collapse" data-parent="#accordion">
+					<br>
+					{% for issue in issue_data[file]|sort_by_severity %}
+					<div class="card" style="border: 1px solid rgba(0, 0, 0, 0.125); border-radius: 4px;">
+						<div class="card-header">
+							{{ issue['category'] }} <div class="{{issue['severity']}}" style="float: right;">{{ issue['severity'] | capitalize() }}</div> 
+						</div>
+						<div class="card-body">
+							<strong>Description:</strong> {{ issue['description'] }} <br>
+							<strong>Start Line:</strong> {{ issue['start_line'] }} <br>
+							<strong>End Line:</strong> {{ issue['end_line'] }} <br>
+						</div>
+					</div>
+					<br>
+					{% endfor %}
+				</div>
+			</div>
+
+		</div>
+		{% endfor %}
+	</div>
+	<br>
+	<br>
+
+</div>
+<script type="text/javascript">
+	$( document ).ready(function() {
+		$("#collapse1").addClass("show");
+	});
+</script>
+{% endblock %}

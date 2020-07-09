@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+
+{% block title %}
+Trending
+{% endblock %}
+
+
+{% block scripts %}
+{{super()}}
+<script type="text/javascript">
+	$(document).ready(function() {
+		var input = document.getElementById("language");
+
+		input.addEventListener("keyup", function(event) {
+			if (event.keyCode === 13) {
+				event.preventDefault();
+				document.getElementById("btnSearch").click();
+			}
+		});
+	});
+	
+	function search() {
+		var xhttp = new XMLHttpRequest();
+		xhttp.onreadystatechange = function() {
+			if (this.readyState == 4 && this.status == 200) {
+				document.getElementById("content").innerHTML =
+				this.responseText;
+			}
+		};
+		url = '/trending';
+
+		var language = document.getElementById("language").value;
+		var since = document.getElementById("since").value;
+
+		if (language) {
+			url += '?language='+encodeURIComponent(language)
+			if (since) {
+				url += '&since='+since
+			}
+		} else if (since) {
+			url += '?since='+since
+		}
+
+		xhttp.open("GET", url, true);
+		xhttp.send();
+	}
+
+	$(function () {
+		$('[data-toggle="tooltip"]').tooltip()
+	})
+</script>
+{% endblock %}
+
+{% block styles %}
+{{super()}}
+{% endblock %}
+
+{% block content %}
+<div class="container">
+
+	<h2>Trending</h2>
+	<div class="input-group mb-3">
+		<input id="language" type="text" class="form-control" placeholder="Programming Language" style="width: 60%;">
+		<select class="custom-select" id="since">
+			<option value="daily" selected>Today</option>
+			<option value="weekly">This week</option>
+			<option value="monthly">This month</option>
+		</select>
+		<div class="input-group-append">
+			<button id="btnSearch" class="btn btn-outline-primary" type="button" onclick="search()">Search</button>
+		</div>
+	</div>
+	{% if trending_repos %}
+	<div class="row">
+		{% for repo in trending_repos.iteritems() %}
+			<div class="col-md-6">
+				<div class="card flex-md-row mb-4 shadow-sm h-md-250">
+					<div class="card-body d-flex flex-column align-items-start">
+						<strong class="d-inline-block mb-2 text-primary">{{ repo[0] | capitalize()| truncate(40) }}</strong>
+						<h6 class="mb-0">
+							<a class="text-dark">Description:</a>
+						</h6>
+						<p class="card-text mb-auto" data-toggle="tooltip" data-placement="top" title="{{ repo[1].description | string() }}">{{ repo[1].description | string() | truncate(40) }}</p>
+						<button class="btn btn-outline-primary btn-sm sub-on-enter" onclick="copyToClipboard('{{repo[1].url}}')">Copy URL</button>
+					</div>
+					<img class="card-img-right flex-auto d-none d-lg-block" src="/static/images/langauge_logos/{{repo[1].language | lower() | replace('#','-sharp') }}.png" style="width: 200px; height: 15vw; object-fit: scale-down;" alt="Image not found" onerror="this.src='/static/images/img_unavailable.png';" >
+				</div>
+			</div>
+		{% endfor %}
+	</div>
+	{% endif %}
+</div>
+
+<script type="text/javascript">
+	function copyToClipboard(element){
+		var $temp = $("<input>");
+		$("body").append($temp);
+		$temp.val(element).select();
+		document.execCommand("copy");
+		alert("Copied!");
+		$temp.remove();
+	}
+</script>
+{% endblock %}

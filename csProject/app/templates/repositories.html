@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% import "bootstrap/wtf.html" as wtf %}
+
+{% block title %}
+Repositories
+{% endblock %}
+
+
+{% block scripts %}
+{{super()}}
+<script type="text/javascript">
+	$(function () {
+		$('[data-toggle="tooltip"]').tooltip()
+	})
+</script>
+{% endblock %}
+
+{% block styles %}
+{{super()}}
+<style type="text/css">
+	.icon {
+		width: 18px;
+		height: 18px;
+		padding: 0;
+		margin: 0;
+		vertical-align: middle;
+	}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+
+	<center>
+		<h3>{{current_user.username}}'s Repositiories</h3><br>
+		{% if repositories %}
+		<div class="card border-secondary" style="width: fit-content">
+			<table class="table" style="width: auto; margin-bottom: 0rem;">
+				<thead class="thead-light">
+					<tr>
+						<th>Repository Name</th>
+						<th>URL</th>
+						<th></th>
+					</tr>
+				</thead>
+				<tbody>
+					{% for name,url in repositories.items() %}
+					<tr>
+						<td>{{ name }}</td>
+						<td><a id='{{name}}'>{{ url }}</a></td>
+						<td style="padding-bottom: 0px; padding-top: 6px;"><button class="btn" onclick="copyToClipboard('{{url}}')" data-toggle="tooltip" data-placement="top" title="Copy To Clipboard"><i class="fa fa-clipboard"></i></button></td>
+					</tr>
+					{% endfor %}
+				</tbody>
+			</table>
+		</div>
+		{% else %}
+			<h5>None</h5>
+		{% endif %}
+	</center>
+</div>
+
+<script type="text/javascript">
+	function copyToClipboard(element){
+		var $temp = $("<input>");
+		$("body").append($temp);
+		$temp.val(element).select();
+		alert("Copied!");
+		document.execCommand("copy");
+		$temp.remove();
+	}
+</script>
+{% endblock %}

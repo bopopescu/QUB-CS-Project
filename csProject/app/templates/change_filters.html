@@ -1,0 +1,99 @@
+{% extends "base.html" %}
+{% import "bootstrap/wtf.html" as wtf %}
+
+{% block title %}Discover{% endblock %}
+
+{% block scripts %}
+{{super()}}
+{% endblock %}
+
+{% block styles %}
+{{super()}}
+{% endblock %}
+
+{% block content %}
+<div class="container">
+
+	<center>
+		<h2>Set Filters</h2><br>
+		<form id="form" method="POST" class="simple-form" action="{{ url_for('main.discover')}}" style="width: 75%">
+			{{ form.csrf_token }}
+
+			<div class="input-group mb-1">
+				<div class="input-group-prepend">
+					<div class="input-group-text">Language</div>
+				</div>
+				<input id="language" type="text" name="language" class="form-control" value="Java" required>
+			</div><br>
+
+			<div class="row">
+
+				<div class="col">
+					<div class="input-group mb-1">
+						<div class="input-group-prepend">
+							<div class="input-group-text">Minimum Size (bytes)</div>
+						</div>
+						<input id="min_size" type="text" name="min_size" class="form-control" value="1000" required>
+					</div>
+				</div>
+
+				<div class="col">
+					<div class="input-group mb-1">
+						<div class="input-group-prepend">
+							<div class="input-group-text">Maximum Size (bytes)</div>
+						</div>
+						<input id="max_size" type="text" name="max_size" class="form-control" value="5000" required>
+					</div>
+				</div>
+			</div>
+			<br>
+			<div class="row">
+				<div class="col">
+					<label class="control-label" for="created_before">Created before:</label>
+					<input autocomplete="off" class="form-control" id="created_before" name="created_before" placeholder="YYYY-MM-DD" type="text" required/>
+				</div>
+				<div class="col">
+					<label class="control-label" for="updated_after">Updated after:</label>
+					<input autocomplete="off" class="form-control" id="updated_after" name="updated_after" placeholder="YYYY-MM-DD" type="text" required/>
+				</div>
+			</div>
+			<br>
+
+			<input class="btn btn-success" type="submit" value="Submit">
+		</form>
+	</center>
+</div>
+
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.4.1/js/bootstrap-datepicker.min.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.4.1/css/bootstrap-datepicker3.css"/>
+
+<script>
+	$(document).ready(function(){
+		var d = new Date();
+		var pastYear = d.getFullYear() - 3;
+		d.setFullYear(pastYear);
+
+		var created_before=$('input[name="created_before"]');
+		created_before.datepicker({
+			format: 'yyyy-mm-dd',
+			todayHighlight: true,
+			autoclose: true,
+			endDate: '+0d',
+		}).datepicker("setDate", d);
+
+
+		d = new Date();
+		var pastMonth = d.getMonth() - 1;
+		d.setMonth(pastMonth);
+		var updated_after=$('input[name="updated_after"]');
+		updated_after.datepicker({
+			format: 'yyyy-mm-dd',
+			todayHighlight: true,
+			autoclose: true,
+			endDate: '+0d',
+		}).datepicker("setDate", d);
+		
+	})
+
+</script>
+{% endblock %}						

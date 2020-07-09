@@ -1,0 +1,13 @@
+config.py
+constants.py
+csProject/app/constants.py
+settings.py
+google_bigquery_credentials.json
+
+repos/*
+archive/*
+*.old
+*.pyc
+*settings.py
+*.ignore
+*.coverage

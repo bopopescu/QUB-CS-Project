@@ -1,0 +1,445 @@
+{% extends "base.html" %}
+
+{% block title %}Analyse{% endblock %}
+
+{% block scripts %}
+{{super()}}
+
+<script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+
+<script type="text/javascript">	
+	google.charts.load('current', {'packages':['line']});
+	google.charts.setOnLoadCallback(drawQualityChart);
+	google.charts.setOnLoadCallback(drawICSChart);
+	google.charts.load('current', {packages: ['corechart', 'line']});
+	google.charts.setOnLoadCallback(drawTDCSChart);
+	google.charts.setOnLoadCallback(drawITDChart);
+	// google.charts.setOnLoadCallback(drawCodeSizeLine);
+
+	function drawQualityChart() {
+		/* Displays code quality over time */
+		var data = new google.visualization.DataTable();
+		data.addColumn('string', 'Date');
+		data.addColumn('number', '{{ repo_name }}');
+
+		var mydata = '{{ck_data|tojson}}';
+		mydata = JSON.parse(mydata);
+		
+		rows = [];
+		mydata.forEach(function(element) {
+			rows.push([element.timestamp, element.quality_score]);
+		});
+		data.addRows(rows); // reverse array for chronological order left -> right
+
+		var options = {
+			chart: {
+				title: 'Code Quality',
+				subtitle: 'over time'
+			},
+			legend: {position: 'none'},
+			vAxis : {
+				format: 'decimal'
+			}
+			// width: 900,
+			// height: 500
+		};
+
+		var chart = new google.charts.Line(document.getElementById('linechart_material'));
+
+		chart.draw(data, google.charts.Line.convertOptions(options));
+	}
+
+	function drawICSChart() {
+		/* Displays issues and code size over time */
+		var data = new google.visualization.DataTable();
+		data.addColumn('string', 'Date');
+		data.addColumn('number', 'Code Smells');
+		data.addColumn('number', 'Lines of Code');
+
+		var mydata = '{{cc_data|tojson}}';
+		mydata = JSON.parse(mydata);
+		
+		rows = [];
+		mydata.forEach(function(element) {
+			rows.push([element.timestamp, element.issues_count, element.lines_of_code]);
+		});
+		data.addRows(rows); // reverse array for chronological order left -> right
+
+		var materialOptions = {
+			chart: { title: 'Code Smells vs Code Size'},
+			width: 600,
+			height: 350,
+			series: { 0: {axis: 'Code Smells'}, 1: {axis: 'LinesofCode'} },
+			axes: { y: { Issues: {label: 'Code Smells'}, LinesofCode: {label: 'Lines of Code'} } }
+		};
+
+		var materialChart = new google.charts.Line(document.getElementById('issues_and_code_size'));
+		materialChart.draw(data, google.charts.Line.convertOptions(materialOptions));
+	}
+
+	function drawTDCSChart() {
+		/* Displays technical debt and code size over time */
+		var data = new google.visualization.DataTable();
+		data.addColumn('string', 'Date');
+		data.addColumn('number', 'Technical Debt');
+		data.addColumn('number', 'Lines of Code');
+
+		var mydata = '{{cc_data|tojson}}';
+		mydata = JSON.parse(mydata);
+		
+		rows = [];
+		mydata.forEach(function(element) {
+			ratio = parseFloat(element.tech_debt_ratio) / 100.0;
+			rows.push([element.timestamp, ratio, element.lines_of_code]);
+		});
+		data.addRows(rows); // reverse array for chronological order left -> right
+
+		var materialOptions = {
+			chart: { title: 'Technical Debt Ratio vs Code Size'},
+			width: 400,
+			height: 324,
+			series: { 0: {axis: 'TechnicalDebt'}, 1: {axis: 'LinesofCode'} },
+			axes: { y: { TechnicalDebt: {label: 'Technical Debt'}, LinesofCode: {label: 'Lines of Code'} } },
+			legend: { position: 'none' },
+		};
+
+		var materialChart = new google.charts.Line(document.getElementById('tech_debt_and_code_size'));
+		materialChart.draw(data, google.charts.Line.convertOptions(materialOptions));
+	}
+
+	function drawITDChart() {
+		/* Displays issues and code size over time */
+		var data = new google.visualization.DataTable();
+		data.addColumn('string', 'Date');
+		data.addColumn('number', 'Issues');
+		data.addColumn('number', 'Technical Debt');
+
+		var mydata = '{{cc_data|tojson}}';
+		mydata = JSON.parse(mydata);
+		
+		rows = [];
+		mydata.forEach(function(element) {
+			ratio = parseFloat(element.tech_debt_ratio) / 100.0;
+			rows.push([element.timestamp, element.issues_count, ratio]);
+		});
+		data.addRows(rows); // reverse array for chronological order left -> right
+
+		var materialOptions = {
+			chart: { title: 'Code Smells vs Technical Debt Ratio'},
+			width: 400,
+			height: 324,
+			series: { 0: {axis: 'Code Smells'}, 1: {axis: 'TechnicalDebt'} },
+			axes: { y: { Issues: {label: 'Code Smells'}, TechnicalDebt: {label: 'Technical Debt'} } },
+			legend: { position: 'none' },
+		};
+
+		var materialChart = new google.charts.Line(document.getElementById('issues_and_tech_debt'));
+		materialChart.draw(data, google.charts.Line.convertOptions(materialOptions));
+	}
+
+	$(window).resize(function(){
+		drawQualityChart();
+		drawICSChart();
+		drawTDCSChart();
+		drawITDChart();
+	});
+</script>
+
+<script type="text/javascript">	
+	google.charts.load('current', {'packages':['line']});
+	google.charts.setOnLoadCallback(drawChart);
+
+	function drawChart() {
+
+		var data = new google.visualization.DataTable();
+		data.addColumn('string', 'Date');
+		data.addColumn('number', 'CBO');
+		data.addColumn('number', 'WMC');
+		data.addColumn('number', 'DIT');
+		data.addColumn('number', 'RFC');
+		data.addColumn('number', 'LCOM');
+
+		'{% if ck_data %}'		
+		var mydata = '{{ck_data|tojson}}';
+		mydata = JSON.parse(mydata);
+		'{% endif %}'
+
+		rows = [];
+		mydata.forEach(function(element) {
+			rows.push([element.timestamp, element.cbo, element.wmc, element.dit, element.rfc, element.lcom]);
+		});
+		data.addRows(rows); 
+
+		var options = {
+			chart: {
+				title: 'CK Metrics over Time',
+			},
+			// width: 900,
+			// height: 500
+		};
+
+		var chart = new google.charts.Line(document.getElementById('ck_metrics_all'));
+
+		chart.draw(data, google.charts.Line.convertOptions(options));
+	}
+</script>
+{% endblock %}
+
+{% block styles %}
+{{super()}}
+<style type="text/css">
+
+	.chart{
+		width: 100%; 
+		padding: 2rem;
+		border: 1px solid #565656;
+		border-radius: 1%;
+		background-color: #fff;
+		z-index: 1;
+	}
+
+	.chart * {z-index: 1; position: relative;}
+
+	/* basic positioning */
+	.legend { list-style: none; float: right; z-index: 1000; padding: 10px 10px; position: inherit; }
+	.legend li { margin-right: 10px; -webkit-font-smoothing: antialiased; font-family: Roboto; color: #757575}
+	.legend span { border: 1px solid #ccc; float: left; width: 12px; height: 12px; margin: 2px; }
+	.legend .line1 { background-color: rgb(66, 133, 244); border-radius: 3px; margin-top: 5px;}
+	.legend .line2 { background-color: rgb(219, 68, 55); border-radius: 3px; margin-top: 5px; }
+
+	.info {
+		padding-right: 0px;
+	}
+
+	.highlight2 {
+		font-family: Lato;
+		font-size: 32px;
+		font-weight: 600;
+		margin-bottom: 0px;
+	}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+
+	<h2>Compare: {{ repo_name }}</h2>
+	<br>
+
+	{% if ck_data %}
+	<h4>CK Metrics</h4>
+
+	<div class="row" style="margin:0 !important;">
+
+		<div class="col">
+			<div class="chart">
+				<div id="linechart_material" style="min-height:324px; min-width: 356px;"></div>
+				<!-- <div id="ck_metrics_all" style="min-height:324px; min-width: 356px;"></div> -->
+			</div>
+		</div>
+
+		<div class="col info">
+
+			<div class="row">
+					<div class="col">
+						<h5 class="highlight">Quality:</h5>
+						{% set past_qs = ck_data[0]['quality_score'] %}
+						{% set current_qs = ck_data[ck_data|length-1]['quality_score'] %}
+						{% set qs_difference = current_qs - past_qs %}
+
+						{% if qs_difference < 0 %}
+						<i class="fas fa-chevron-circle-down fa-5x" style="color: red; float: left;"></i>
+						{% else %}
+						<i class="fas fa-chevron-circle-up fa-5x" style="color: limegreen; float: left;"></i>
+						{% endif %}
+						<h5 style="font-family: Lato; font-size: 60px;">&nbsp{{ "%.2f"|format(qs_difference|abs) }}</h5>
+					</div>
+					<div class="col">
+						<h5 class="highlight">Classes:</h5>
+						{% set current_classes = ck_data[0]['classes']|float %}
+						{% set past_classes = ck_data[-1]['classes']|float %}
+						{% set class_difference = current_classes - past_classes %}
+
+						{% if class_difference < 0 %}
+						<i class="fas fa-chevron-circle-up fa-5x" style="color: lightgrey; float: left;"></i>
+						{% else %}
+						<i class="fas fa-chevron-circle-down fa-5x" style="color: lightgrey; float: left;"></i>
+						{% endif %}
+						<h5 style="font-family: Lato; font-size: 60px;">&nbsp{{ class_difference|abs|int }}</h5>
+					</div>
+			</div>
+			<br>
+			<br>
+
+			<h5>Quality Metrics:</h5>
+			<div class="row">
+				<div class="col">
+
+					<h6 class="highlight">CBO:</h6>
+					{% set past_cbo = ck_data[0]['cbo']/current_classes %}
+					{% set current_cbo = ck_data[ck_data|length-1]['cbo']/past_classes %}
+					{% set cbo_difference = current_cbo - past_cbo %}
+
+					{% if cbo_difference < 0 %}
+					<i class="fas fa-chevron-circle-up fa-3x" style="color: red; float: left;"></i>
+					{% else %}
+					<i class="fas fa-chevron-circle-down fa-3x" style="color: limegreen; float: left;"></i>
+					{% endif %}
+					<h5 style="font-family: Lato; font-size: 40px;">&nbsp{{ "%.2f"|format(cbo_difference|abs) }}</h5>
+				</div>
+
+				<div class="col">
+					<h6 class="highlight">WMC:</h6>
+					{% set past_wmc = ck_data[0]['wmc']/current_classes %}
+					{% set current_wmc = ck_data[-1]['wmc']/past_classes %}
+					{% set wmc_difference = current_wmc - past_wmc %}
+
+					{% if wmc_difference < 0 %}
+					<i class="fas fa-chevron-circle-up fa-3x" style="color: red; float: left;"></i>
+					{% else %}
+					<i class="fas fa-chevron-circle-down fa-3x" style="color: limegreen; float: left;"></i>
+					{% endif %}
+					<h5 style="font-family: Lato; font-size: 40px;">&nbsp{{ "%.2f"|format(wmc_difference|abs) }}</h5>
+				</div>
+
+				<div class="col">
+					<h6 class="highlight">DIT:</h6>
+					{% set past_dit = ck_data[0]['dit']/current_classes %}
+					{% set current_dit = ck_data[-1]['dit']/past_classes %}
+					{% set dit_difference = 1-current_dit - past_dit %}
+
+					{% if dit_difference < 0 %}
+					<i class="fas fa-chevron-circle-up fa-3x" style="color: lightgrey; float: left;"></i>
+					{% else %}
+					<i class="fas fa-chevron-circle-down fa-3x" style="color: lightgrey; float: left;"></i>
+					{% endif %}
+					<h5 style="font-family: Lato; font-size: 40px;">&nbsp{{ "%.2f"|format(dit_difference|abs) }}</h5>
+				</div>
+			</div>
+
+			<br>
+
+			<div class="row">
+				<div class="col">
+					<h6 class="highlight">RFC:</h6>
+					{% set past_rfc = ck_data[0]['rfc']/current_classes %}
+					{% set current_rfc = ck_data[-1]['rfc']/past_classes %}
+					{% set rfc_difference = current_rfc - past_rfc %}
+
+					{% if rfc_difference < 0 %}
+					<i class="fas fa-chevron-circle-up fa-3x" style="color: red; float: left;"></i>
+					{% else %}
+					<i class="fas fa-chevron-circle-down fa-3x" style="color: limegreen; float: left;"></i>
+					{% endif %}
+					<h5 style="font-family: Lato; font-size: 40px;">&nbsp{{ "%.2f"|format(rfc_difference|abs) }}</h5>
+				</div>
+
+				<div class="col">
+					<h6 class="highlight">LCOM:</h6>
+					{% set past_lcom = ck_data[0]['lcom']/current_classes %}
+					{% set current_lcom = ck_data[-1]['lcom']/past_classes %}
+					{% set lcom_difference = current_lcom - past_lcom %}
+
+					{% if lcom_difference > 0 %}
+					<i class="fas fa-chevron-circle-up fa-3x" style="color: red; float: left;"></i>
+					{% else %}
+					<i class="fas fa-chevron-circle-down fa-3x" style="color: limegreen; float: left;"></i>
+					{% endif %}
+					<h5 style="font-family: Lato; font-size: 40px;">&nbsp{{ "%.2f"|format(lcom_difference|abs) }}</h5>
+				</div>
+
+				<div class="col"></div>
+
+			</div>
+
+		</div>
+
+	</div>
+	<br>
+	<br>
+	{% endif %}
+
+	<div class="row" style="margin:0 !important;">
+
+		<div class="col">
+			<div class="chart" id="issues_and_code_size" style="min-height:350px; min-width: 600px;"></div>
+		</div>
+		
+		<div class="col info">
+			<div class="row">
+				<div class="col">
+					<h5 class="">Code Smells:</h5>
+					{% set past_issues = cc_data[0]['issues_count'] %}
+					{% set current_issues = cc_data[cc_data|length-1]['issues_count'] %}
+					{% set issue_difference = current_issues - past_issues %}
+
+					{% if issue_difference > 0 %}
+					<i class="fas fa-chevron-circle-up fa-3x" style="color: red; float: left;"></i>
+					{% else %}
+					<i class="fas fa-chevron-circle-down fa-3x" style="color: limegreen; float: left;"></i>
+					{% endif %}
+					<h5 style="font-family: Lato; font-size: 40px;">&nbsp{{ issue_difference|abs }}</h5>
+				</div>
+
+				<div class="col">
+					<h5 class="">Code size:</h5>
+					{% set past_size = cc_data[0]['lines_of_code'] %}
+					{% set current_size = cc_data[cc_data|length-1]['lines_of_code'] %}
+					{% set size_difference = current_size - past_size %}
+
+					{% if size_difference > 0 %}
+					<i class="fas fa-chevron-circle-up fa-3x" style="color: red; float: left;"></i>
+					{% else %}
+					<i class="fas fa-chevron-circle-down fa-3x" style="color: limegreen; float: left;"></i>
+					{% endif %}
+					<h5 style="font-family: Lato; font-size: 40px;">&nbsp{{ size_difference|abs }}</h5>
+				</div>
+			</div>
+
+			<br>
+
+			<h5 class="">Technical Debt:</h5>
+			{% set past_tech_debt_ratio = cc_data[0]['tech_debt_ratio'] |replace('%','') | float %}
+			{% set current_tech_debt_ratio = cc_data[cc_data|length-1]['tech_debt_ratio'] |replace('%','') | float %}
+			{% set tech_debt_ratio_difference = current_tech_debt_ratio - past_tech_debt_ratio %}
+			
+			{% if tech_debt_ratio_difference > 0 %}
+				<i class="fas fa-chevron-circle-up fa-3x" style="color: red; float: left;"></i>
+			{% else %}
+				<i class="fas fa-chevron-circle-down fa-3x" style="color: limegreen; float: left;"></i>
+			{% endif %}
+			<h5 style="font-family: Lato; font-size: 40px;">&nbsp{{ tech_debt_ratio_difference|abs|string + '%' }}</h5>
+
+		</div>
+	</div>
+
+	<br>
+
+	<div class="row" style="margin:0 !important;">
+
+		<div class="col">
+			<ul class="legend">
+				<li><span class="line1"></span>   Technical Debt</li>
+				<li><span class="line2"></span>   Lines of Code</li>
+			</ul>	
+			<div class="chart">
+				<div id="tech_debt_and_code_size" style="min-height:324px; min-width: 356px;"></div>
+			</div>
+		</div>
+
+		<div class="col">
+			<ul class="legend">
+				<li><span class="line1"></span>   Code Smells</li>
+				<li><span class="line2"></span>   Technical Debt</li>
+			</ul>	
+			<div class="chart">
+				<div id="issues_and_tech_debt" style="min-height:324px; min-width: 356px;"></div>
+			</div>
+		</div>
+
+	</div>
+	<br>
+
+</div>
+
+{% endblock %}

@@ -1,0 +1,154 @@
+{% extends "base.html" %}
+{% block title %}Statistics{% endblock %}
+
+{% block styles %}
+{{super()}}
+<style type="text/css">
+	.btn-circle {
+		width: 30px;
+		height: 30px;
+		padding: 0px 0px;
+		border-radius: 15px;
+		text-align: center;
+		line-height: 1.42857;
+		color: green;
+	}
+
+	.tab-content > .active,
+	.pill-content > .active {
+		min-height: 500px;
+	} 
+
+</style>
+{% endblock %}
+
+{% block scripts %}
+{{super()}}
+<script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+
+{% if chart_stats %}
+<script type="text/javascript">
+
+	var newdata = '{{chart_stats|tojson}}';
+
+	newdata = JSON.parse(newdata);
+
+	console.log(newdata);
+
+	google.charts.load('current', {'packages':['bar']});
+	google.charts.setOnLoadCallback(drawChart);
+
+	function drawChart() {
+		var x = document.getElementsByTagName("body")
+		x[0].style.backgroundColor = "#fff";
+
+		var data = google.visualization.arrayToDataTable(newdata);
+
+		var options = {
+			chart: {
+				title: 'Repositiory Statistics',
+				subtitle: 'Stargazers, Watchers, Subscribers, Size, Open Issues and Forks',
+			},
+			// isStacked: true,
+		  bars: 'horizontal' // Required for Material Bar Charts.
+		};
+
+		var chart = new google.charts.Bar(document.getElementById('graph'));
+
+		chart.draw(data, google.charts.Bar.convertOptions(options));
+
+	}
+</script>
+{% endif %}
+
+{% endblock %}
+
+{% block content %}
+<div class="container">
+	<h2>Repository Statistics</h2>
+	<br>
+	<center>
+		<form id="form" method="POST" class="simple-form" action="{{ url_for('.stats') }}" style="width: 75%">
+			{{ form.csrf_token }}
+			<div id="form" class="input-group mb-3">
+				<div class="input-group-prepend">
+					<div class="input-group-text">URL</div>
+				</div>
+				<input type="text" name="url" class="form-control" placeholder="GitHub Repository URL">
+				<div id="submitBtn" class="input-group-append">
+					<button class="btn btn-success" type="submit" onclick="show_loader()">Submit</button> 
+				</div>
+			</div>
+			<div class="hidden" id="wrapper"></div>
+			<button class="btn btn-default btn-circle" type="button" onclick="addField()"><i class="fa fa-plus"></i></button>
+			<input type="hidden" name="view" value='raw'> 
+		</form>
+
+		<br>
+		<div id="loader" class="loader" style="display: none;"></div>
+
+		{% if stats %}
+		<div class="card text-center">
+
+			<div class="card-header">
+				<ul class="nav nav-tabs card-header-tabs">
+					<li class="nav-item">
+						<a class="nav-link active" id="graph-tab" data-toggle="tab" href="#graph">Graph</a>
+					</li>
+					<li class="nav-item">
+						<a class="nav-link" id="raw-tab" data-toggle="tab" href="#raw" role="tab" aria-controls="raw" aria-selected="true">Raw</a>
+					</li>
+				</ul>
+			</div>
+
+			<div class="card-body">
+
+				<div class="tab-content" id="myTabContent">
+
+					<div class="tab-pane fade show active" id="graph" role="tabpanel">
+					</div>
+
+					<div class="tab-pane fade" id="raw" role="tabpanel" aria-labelledby="raw-tab">
+						<div class="row justify-content-center">
+							{% for repo,stat in stats.items() %}
+							<div class="col-auto mb-2">
+								<div class="card" style="min-width: 20rem">
+									<div class="card-header text-light bg-dark">
+										<h5 class="card-title">{{ repo | capitalize() }}</h5>
+									</div>
+									<div class="card-body">
+										<table class="table mb-0">
+											{% for k,s in stat.items() %}
+											<tr>
+												<td>{{ k | capitalize() }}</td>
+												<td>{{ s|string()|truncate(50) }}</td>
+											</tr>
+											{% endfor %}
+										</table>
+									</div>
+								</div>
+							</div>
+							<br>
+							{% endfor %}
+						</div>
+					</div>
+
+				</div>
+			</div>
+		</div>
+		{% endif %}
+	</center>
+
+
+	<script type="text/javascript">
+		function addField(){
+			var el = document.getElementById("wrapper");
+			el.classList.remove("hidden");
+			var prependURLTag = "<div id='form' class='input-group mb-3'><div class='input-group-prepend'><div class='input-group-text'>URL</div></div>";
+			$("#wrapper").append(prependURLTag+"<input name='url' type='text' class='form-control' placeholder='Repository URL'><br></div>");
+			$( "#submitBtn" ).remove();
+			$("#form").append("<button id='submitBtn' class='btn btn-success' type='submit' onclick='show_loader()''>Submit</button>");
+		}
+	</script>
+</div>
+{% endblock %}

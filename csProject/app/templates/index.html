@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block title %}index{% endblock %}
+
+{% block styles %}
+{{super()}}
+{% endblock %}
+
+{% block scripts %}
+{{super()}}
+<script type="text/javascript">
+	function show_loader(){
+		var x = document.getElementById("input_field").value;
+		if (x != "") {
+			loader = document.getElementById("loader");
+			loader.style.display = "block";
+			document.body.style.cursor = "wait";
+		}
+	}
+</script>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+	<h2>Welcome, {{current_user.username}}</h2>
+	<br>
+	<center>
+		<form method="POST" class="simple-form" action="{{ url_for('main.index') }}" style="width: 75%">
+			{{ form.hidden_tag() }}
+			{{ form.csrf_token }}
+			<div class="input-group mb-3">
+				<div class="input-group-prepend">
+					<div class="input-group-text">URL</div>
+				</div>
+				<input id="input_field" type="text" name="url" class="form-control" placeholder="GitHub Repository URL" required>
+				<div class="input-group-append">
+					<button class="btn btn-success" type="submit" onclick="show_loader()">Clone</button> 
+				</div>
+			</div>
+		</form>
+		<br>
+		<div id="loader" class="loader" style="display: none;"></div>
+	</center>
+
+</div>
+{% endblock %}

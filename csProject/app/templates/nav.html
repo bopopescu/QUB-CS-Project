@@ -1,0 +1,40 @@
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+	<div class="container">
+
+		<a class="navbar-brand" href="/">Home</a>
+		<button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+			<span class="navbar-toggler-icon"></span>
+		</button>
+
+		<div class="collapse navbar-collapse" id="navbarSupportedContent">
+			<ul class="navbar-nav mr-auto">
+
+				<li class="nav-item">
+					<a class="nav-link" href="/repositories" onclick="cursor_wait()">My Repositories</a>
+				</li>
+
+				<li class="nav-item">
+					<a class="nav-link" href="/trending" onclick="cursor_wait()">Trending</a>
+				</li>
+
+				<li class="nav-item">
+					<a class="nav-link" href="/discover" onclick="cursor_wait()">Discover</a>
+				</li>
+
+				<li class="nav-item">
+					<a class="nav-link" href="/stats">Statistics</a>
+				</li>
+
+				<li class="nav-item">
+					<a class="nav-link" href="/compare">Compare</a>
+				</li>
+				
+			</ul>
+
+			{% if current_user.is_authenticated %}
+			<a href="/logout" class="pull-right">Logout</a>
+			{% endif %}
+
+		</div>
+	</div>
+</nav><br>

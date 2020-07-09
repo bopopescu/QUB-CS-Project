@@ -1,0 +1,218 @@
+{% extends "base.html" %}
+{% import "bootstrap/wtf.html" as wtf %}
+{% block title %}Index{% endblock %}
+
+{% block styles %}
+{{super()}}
+<style type="text/css">
+	a.custom-card,
+	a.custom-card:hover {
+		color: inherit;
+	}
+
+	.zoom {
+		z-index: 1;
+		transition: transform .2s; /* Animation */
+	}
+	.zoom:hover {
+		transform: scale(1.1);
+	} 
+
+	.btn-circle {
+		width: 30px;
+		height: 30px;
+		padding: 0px 0px;
+		border-radius: 15px;
+		text-align: center;
+		line-height: 1.42857;
+		color: green;
+	}
+
+	#containerIntro h2,
+	#containerIntro p {
+		display: inline;
+		vertical-align: top;
+	}
+	#containerIntro p {
+		float: right;
+		margin-top: 5px;
+	}
+
+	#filterInput {
+		float:right;width:25%;
+		background-color: white;
+	}
+</style>
+<link rel="stylesheet" href="https://formden.com/static/cdn/font-awesome/4.4.0/css/font-awesome.min.css" />
+{% endblock %}
+
+{% block scripts %}
+{{super()}}
+	<script src="{{ url_for('static', filename='js/waitdialog.js') }}"></script>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+
+	<div id="containerIntro" style="margin-bottom: 10px">
+		<h2>Welcome, {{current_user.username}}</h2>
+		<p id="current_jobs" style="color: red;"></p>
+	</div>
+	<small class="text-muted">You can use this page to archive previous versions of repositories so that time analysis can be performed. Paste the GitHub repository URL into the field below and choose a date range.</small>
+	<br>
+	<br>
+	<center>
+		
+		<form class="form" id="taskForm" method="POST" style="width: 75%">
+			{{ form.hidden_tag() }}
+			<div class="input-group mb-1">
+				<div class="input-group-prepend">
+					<div class="input-group-text">URL</div>
+				</div>
+				<input spellcheck="false" id="single_url_input" type="text" name="url" class="form-control" placeholder="GitHub Repository URL" required>
+				<div id="url_container" class="input-group-append">
+					<button id="toggle_form" class="btn btn-primary" type="button" onclick="toggleForm();">Change form</button> 
+				</div>
+			</div>
+			<div class="hidden" id="wrapper"></div>
+			<button class="btn btn-default btn-circle" type="button" onclick="addField()"><i class="fa fa-plus"></i></button>
+			<input type="hidden" name="view" value='single'> 
+
+			<div class="row" style="width: 50%">
+				<div class="col">
+					<label class="control-label" for="start_date">From:</label>
+					<input autocomplete="off" class="form-control" id="start_date" name="start_date" placeholder="DD/MM/YYYY" type="text" required/>
+				</div>
+				<div class="col">
+					<label class="control-label" for="end_date">To:</label>
+					<input autocomplete="off" class="form-control" id="end_date" name="end_date" placeholder="DD/MM/YYYY" type="text" required/>
+				</div>
+			</div><br>
+
+			<button id="submitTaskForm" class="btn btn-success" type="button">Archive</button> 
+
+		</form>
+
+		<form class="form hidden" id="csvForm" method="POST" style="width: 75%">
+			{{ form.hidden_tag() }}
+			<div class="input-group mb-1">
+				<div class="input-group-prepend">
+					<div class="input-group-text">URL</div>
+				</div>
+				<textarea style="min-height: min-content; min-width: 75%;" spellcheck="false" id="csv_url_input" type="text" name="urls" class="form-control" placeholder="Separate URLs with a single comma: <url1>,<url2>, ..." required></textarea>
+					<button id="toggle_form" class="btn btn-primary" type="button" onclick="toggleForm();">Change form</button> 
+			</div>
+			<input type="hidden" name="view" value='csv'> 
+
+			<div class="row" style="width: 50%">
+				<div class="col">
+					<label class="control-label" for="start_date">From:</label>
+					<input autocomplete="off" class="form-control" id="start_date" name="start_date" placeholder="DD/MM/YYYY" type="text"/>
+				</div>
+				<div class="col">
+					<label class="control-label" for="end_date">To:</label>
+					<input autocomplete="off" class="form-control" id="end_date" name="end_date" placeholder="DD/MM/YYYY" type="text"/>
+				</div>
+			</div><br>
+
+			<button id="submitCSVForm" class="btn btn-success" type="button">Archive</button> 
+
+		</form>
+
+		<hr>
+<br>
+		{% if archived_repos %}
+			<input id="filterInput" class="form-control" type="text" name="filter" placeholder="Search" onkeyup="filter()">
+			<br><br>
+			{% for repo_name, timestamps in archived_repos.items() %}
+				<div id="{{repo_name}}" class="repo">
+					<h4>{{ repo_name }}</h4>
+
+					<div class="row">
+						{% for timestamp in timestamps|sort(reverse=True) %}
+							<div class="col">
+								<a href="/analyse?repo={{ repo_name }}&timestamp={{ timestamp }}" onclick="waitingDialog.show();" class="custom-card">
+									<div class="card shadow-sm my-3 zoom">
+										<div class="card-body">
+											<h5 class="card-title">{{ timestamp }}</h5>
+											<span><i class="fas fa-laptop-code fa-5x"></i></span>
+										</div>
+									</div>
+								</a>
+							</div>
+						{% endfor %}
+					</div>
+					<button type="button" class="btn btn-link" onclick="waitingDialog.show();"><a href="/analyse_all/{{repo_name}}" class="btn btn-link" role="button">Compare {{ repo_name }} repositories</a></button>
+					<br>
+					<br>
+				</div>
+			{% endfor %}
+		{% endif %}
+	</center>
+
+</div>
+
+<!-- Include Date Range Picker -->
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.4.1/js/bootstrap-datepicker.min.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.4.1/css/bootstrap-datepicker3.css"/>
+
+<script>
+	$(document).ready(function(){
+		var start_date=$('input[name="start_date"]'); //our date input has the name "date"
+		start_date.datepicker({
+			format: 'dd/mm/yyyy',
+			todayHighlight: true,
+			autoclose: true,
+		})
+
+
+		var end_date=$('input[name="end_date"]'); //our date input has the name "date"
+		end_date.datepicker({
+			format: 'dd/mm/yyyy',
+			todayHighlight: true,
+			autoclose: true,
+		})
+	})
+
+	function addField(){
+		var el = document.getElementById("wrapper");
+		el.classList.remove("hidden");
+		var prependURLTag = "<div id='form' class='input-group mb-1'><div class='input-group-prepend'><div class='input-group-text'>URL</div></div>";
+		$("#wrapper").append(prependURLTag+"<input id='single_url_input' type='text' name='url' class='form-control' placeholder='GitHub Repository URL' required></div></div>");
+		// $("#form").append("<button id='submit' class='btn btn-success' type='button' onclick='//show_loader()'>Archive</button>");
+	}
+
+	function toggleForm(){
+		var task_form = document.getElementById("taskForm");
+		var csvForm = document.getElementById("csvForm");
+
+		if (task_form.classList.contains("hidden")){
+			task_form.classList.remove("hidden");
+			csvForm.classList.add("hidden");
+		} else {
+			task_form.classList.add("hidden");
+			csvForm.classList.remove("hidden");
+		}
+	}
+
+	function filter() {
+		var input, filter, repos, i, txtValue;
+		input = document.getElementById("filterInput");
+		filter = input.value.toUpperCase();
+		repos = document.getElementsByClassName("repo");
+		for (i = 0; i < repos.length; i++) {
+			txtValue = repos[i].id;
+			if (txtValue.toUpperCase().indexOf(filter) > -1) {
+				repos[i].style.display = "";
+			} else {
+				repos[i].style.display = "none";
+			}
+		}
+	}
+</script>
+
+{% endblock %}
+
+{% block app_scripts %}
+	<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+{% endblock %}

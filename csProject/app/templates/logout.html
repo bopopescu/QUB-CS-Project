@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+
+{% block title %}
+Logged Out
+{% endblock %}
+
+
+{% block scripts %}
+{{super()}}
+{% endblock %}
+
+{% block styles %}
+{{super()}}
+{% endblock %}
+
+{% block content %}
+<div class="text-xs-center">
+	<center>
+		<h1 class="display-3">Goodbye!</h1>
+		<p class="lead"><strong>Thanks for visiting.</strong> You have been logged out.</p>
+		<hr>
+		<p class="lead">
+			<a class="btn btn-primary btn-sm" href="{{ url_for('auth.login') }}" role="button">Login</a>
+		</p>
+	</center> 
+</div>
+{% endblock %}

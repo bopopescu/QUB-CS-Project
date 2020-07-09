@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+
+{% block title %}
+Unauthorised
+{% endblock %}
+
+{% block styles %}
+{{super()}}
+<style type="text/css">
+	body {
+		background-color: #eee;
+	}
+</style>
+{% endblock %}
+
+{% block scripts %}
+{{super()}}
+{% endblock %}
+
+{% block content %}
+<div class="container">
+
+	<center>
+		<h1>Welcome</h1>
+		<br>
+		<img src="{{ url_for('static', filename='images/github_logo.svg')}}" style="width: 200px;" />
+		<br>
+		<br>
+		<h6>Please login to continue:</h6>
+		<a class="btn btn-primary" href="{{ url_for('auth.login') }}">Login</a>
+	</center>
+</div> 
+{% endblock %}

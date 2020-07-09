@@ -1,0 +1,94 @@
+<!doctype html>
+<html>
+<head>
+	{% block head %}
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+
+	{% block styles %}
+	<link rel="stylesheet" href="{{url_for('static', filename='style.css')}}">
+	<link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
+	<link rel="stylesheet" href="{{ url_for('static', filename='css/font-awesome-4.7.0/css/font-awesome.min.css') }}">
+	<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.5.0/css/all.css" integrity="sha384-B4dIYHKNBt8Bc12p+WXckhzcICo0wtJAoU8YZTY5qE0Id1GSseTk6S+L3BlXeVIU" crossorigin="anonymous">
+	<link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}">
+	<link href='http://fonts.googleapis.com/css?family=Lato:300' rel='stylesheet'  type='text/css'>
+	<style type="text/css">
+		.loader {
+			border: 8px solid #f3f3f3;
+			border-radius: 50%;
+			border-top: 8px solid #3498db;
+			width: 60px;
+			height: 60px;
+			-webkit-animation: spin 2s linear infinite; /* Safari */
+			animation: spin 2s linear infinite;
+		}
+		@keyframes spin {
+			0% { transform: rotate(0deg); }
+			100% { transform: rotate(360deg); }
+		}
+		.hidden {
+			/*visibility:hidden;*/
+			display: none;
+		}
+	</style>
+	{% endblock %}
+
+	{% block scripts %}
+	<script src="{{ url_for('static', filename='jquery.min.js') }}"></script>
+	<script src="{{ url_for('static', filename='js/popper.min.js') }}"></script>
+	<script src="{{ url_for('static', filename='js/bootstrap.min.js') }}"></script>
+	<script src="https://cdn.jsdelivr.net/jquery.validation/1.15.0/jquery.validate.min.js"></script>
+	
+	<script type="text/javascript">
+		function show_loader(){
+			loader = document.getElementById("loader");
+			loader.style.display = "block";
+			cursor_wait();
+		}
+
+		function show_progress_bar(){
+			loader = document.getElementById("progress");
+			loader.style.display = "flex";
+			cursor_wait();
+			var timeleft = 45;
+			var downloadTimer = setInterval(function(){
+				$('#progress_bar').css('width', (45 - --timeleft)*100/45+'%');
+				if(timeleft <= 0)
+					clearInterval(downloadTimer);
+			},1000);
+		}
+
+		function cursor_wait() {
+			document.body.style.cursor="wait";
+		}
+	</script>
+	<script type=text/javascript>
+		$SCRIPT_ROOT = {{ request.script_root|tojson|safe }};
+	</script>
+
+	{% block app_scripts %}{% endblock %}
+	{% endblock %}
+
+	<title>{% block title %}{% endblock %}</title>
+	{% endblock %}
+</head>
+<body style="background-color: #fafafa;">
+	<div id="content">
+		{% include 'nav.html' %}
+		<div class="container" id="mainContent">
+			{% with messages = get_flashed_messages(with_categories=true) %}
+			{% if messages %}
+			<ul class=flash>
+				{% for category,message in messages %}
+				<div class="alert alert-{{category}} alert-dismissible" role="alert">
+					<button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">×</span></button>
+					{{message}}
+				</div>
+				{% endfor %}
+			</ul>
+			{% endif %}
+			{% endwith %}
+		</div>
+		{% block content %}{% endblock %}
+	</div>
+</body>
+</html>

@@ -1,0 +1,195 @@
+{% extends "base.html" %}
+{% block title %}Analysis{% endblock %}
+
+{% block styles %}
+{{super()}}
+<!-- Modal -->
+<style type="text/css">
+	.hidden{
+		border: 0px;
+		background-color: transparent;
+	}
+	.modal-lg {
+		max-width: 80%;
+		max-height: 90%;
+		width: 100%;
+		/*height: 10%;*/
+		margin: 0;
+		padding: 0;
+	}
+
+	.modal-content {
+		height: auto;
+		min-height: 100%;
+		border-radius: 0;
+	}
+</style>
+{% endblock %}
+
+{% block scripts %}
+{{super()}}
+<script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+<script type="text/javascript">
+	$(document).on('show.bs.modal', '#help_modal', function (e) {
+		target = $(e.relatedTarget);
+		metric = target[0].id;
+		switch(metric) {
+			case "cbo":
+				$("#metric_name").text("Coupling Between Objects");
+		    	$("#metric_description").text("CBO is a count of the number of other classes to which a class is coupled.\n\nHigh CBO score:\n - Improved modularity and encapsulation.\n - Greater independence (easier re-use).\n - Improved maintainability.");
+				$("#metric_goal").text("High");
+		    	break;
+		    case 'wmc':
+				$("#metric_name").text("Weighted Methods per Class");
+		    	$("#metric_description").text("WMC is the sum of the complexity of the methods of a class.\n\nHigh WMC score:\n - Less time required to develop and maintain a class.");
+				$("#metric_goal").text("High");
+		    	break;
+			case "dit":
+				$("#metric_name").text("Depth of Inheritance Tree");
+		    	$("#metric_description").text("DIT is the maximum length from the node to the root of the tree.\n\nHigh DIT score:\n - Increased complexity.\n - Greater potential for re-use.\n\nLow DIT score:\n - Reduced complexity.\n - Reduced potential for re-use");
+				$("#metric_goal").text("Trade-off");
+		    	break
+			case "rfc":
+				$("#metric_name").text("Response for Class");
+		    	$("#metric_description").text("RFC is the number of methods of the class + the number of methods called by any of those methods.\n\nHigh RFC score:\n - Reduced complexity of maintenance and testing.\n");
+				$("#metric_goal").text("High");
+		    	break;
+			case "lcom":
+				$("#metric_name").text("Lack of Cohesion of Methods");
+		    	$("#metric_description").text("LCOM measures the dissimilarity of methods in a class via instanced variables.\n\nLow LCOM score:\n - Increased complexity.\n - Indicates that a class should probably be split into sub-classes");
+				$("#metric_goal").text("High");
+		    	break;
+		}
+	});
+</script>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+	<center>
+		<h2>Code Quality Analysis</h2>
+		{% if language %}<sub>Analysing code in <b>{{ language }}</b> files. Incorrect language? <a href="{{ url_for('main.change_language', repo = request.args.get('repo'), timestamp = request.args.get('timestamp'))}}">Change it.</a></sub>{% endif %}
+	</center>
+	<br>
+		<center>
+
+			<h4>Quality Score:</h4>
+			{% if data['ck_metrics'] %}
+				{% if data['ck_metrics']['quality_score'] < 0.5 %}
+				<b><h2><span style="color: red;">{{ "%.2f"|format(data['ck_metrics']['quality_score']*100|abs) }}</b></span>/100</h2>
+				{% else %}
+				<b><h2><span style="color: limegreen;">{{ "%.2f"|format(data['ck_metrics']['quality_score']*100|abs) }}</b></span>/100</h2>
+				{% endif %}
+			{% else %}
+			<sub>No data. Java projects must have at least <b>5 classes</b> to be analysed.</sub><br>
+			{% endif %}
+			<br>
+
+			{% if data['ck_metrics'] %}
+			<h4 style="padding-bottom: 0px;">CK Metrics</h4>
+			<sub><b>Note:</b> The scores below are calculated based on how successfully the classes in this project remain within the threshold value for each metric.</sub><br>
+			<br>
+			{% endif %}
+			
+			<!-- Help Modal -->
+			<div class="modal fade" id="help_modal" role="dialog">
+				<div class="modal-dialog modal-dialog-centered">
+					<div class="modal-content">
+						<div class="modal-header">
+							<h4 id="metric_name" class="modal-title"></h4>
+							<button type="button" style="float: right" class="close" data-dismiss="modal">&times;</button>
+						</div>
+						<div class="modal-body">
+							<p id="metric_description" style="white-space: pre-wrap;"></p>
+							Objective: <b><p id="metric_goal"></p></b>
+						</div>
+					</div>
+
+				</div>
+			</div>
+
+			<center>
+				<div class="card-deck">
+
+					{% set num_classes = data['ck_metrics']['classes'] %}
+					<div class="card mb-4 border-secondary mb-3">
+						<h6 class="card-header d-flex align-items-center justify-content-center h-100">Coupling Between Objects</h6>
+						<div class="card-body">
+							{{ "%.2f"|format(100 - (data['ck_metrics']['cbo']*100/num_classes)|abs)|int }}/100<br>
+							<i id="cbo" class="far fa-question-circle" style="float: right; cursor: pointer;" data-toggle="modal" data-target="#help_modal"></i>
+						</div>
+					</div>
+
+
+					<div class="card mb-4 border-secondary mb-3">
+						<h6 class="card-header d-flex align-items-center justify-content-center h-100">Weighted Methods per Class</h6>
+						<div class="card-body">
+							{{ "%.2f"|format(100 - (data['ck_metrics']['wmc']*100/num_classes)|abs)|int }}/100<br>
+							<i id="wmc" class="far fa-question-circle" style="float: right; cursor: pointer;" data-toggle="modal" data-target="#help_modal"></i>
+						</div>
+					</div>
+
+					<div class="card mb-4 border-secondary mb-3">
+						<h6 class="card-header d-flex align-items-center justify-content-center h-100">Depth of Inheritance Tree</h6>
+						<div class="card-body">
+							{{ "%.2f"|format(100 - (data['ck_metrics']['dit']*100/num_classes)|abs)|int }}/100<br>
+							<i id="dit" class="far fa-question-circle" style="float: right; cursor: pointer;" data-toggle="modal" data-target="#help_modal"></i>
+						</div>
+					</div>
+
+					<div class="card mb-4 border-secondary mb-3">
+						<h6 class="card-header d-flex align-items-center justify-content-center h-100">Response for Class</h6>
+						<div class="card-body">
+							{{ "%.2f"|format(100 - (data['ck_metrics']['rfc']*100/num_classes)|abs)|int }}/100<br>
+							<i id="rfc" class="far fa-question-circle" style="float: right; cursor: pointer;" data-toggle="modal" data-target="#help_modal"></i>
+						</div>
+					</div>
+
+					<div class="card mb-4 border-secondary mb-3">
+						<h6 class="card-header d-flex align-items-center justify-content-center h-100">Lack of Cohesion of Methods</h6>
+						<div class="card-body">
+							{{ "%.2f"|format(100 - (data['ck_metrics']['lcom']*100/num_classes)|abs)|int }}/100<br>
+							<i id="lcom" class="far fa-question-circle" style="float: right; cursor: pointer;" data-toggle="modal" data-target="#help_modal"></i>
+						</div>
+					</div>
+
+				</div>
+			</center>
+
+			{% if data['cc_data'] %}
+			<h4>Code Climate Analysis</h4>
+			<br><div class="card-deck">
+
+				<div class="card mb-4 border-secondary mb-3">
+					<h5 class="card-header">Code Smells</h5>
+					{% if data['cc_data'] %}
+						<div class="card-body">
+							<p class="card-text"><b>Number of code smells: </b>{{ data['cc_data']['issues_count'] }}</p>
+							<p class="card-text"><b>Remediation Time: </b>{{ data['cc_data']['issues_remediation'] }}</p>
+							<p class="card-text"><a href="{{ url_for('.quality_issues', id=data['cc_data']['id']) }}">View Code Smells</a></p>
+						</div>
+					{% else %}
+						<br>No data<br><br>
+					{% endif %}
+				</div>
+
+				<div class="card mb-4 border-secondary mb-3">
+					<h5 class="card-header">Technical Debt</h5>
+					{% if data['cc_data'] %}
+						<div class="card-body">
+							<p class="card-text"><b>Technical Debt Ratio: </b>{{ data['cc_data']['tech_debt_ratio'] }}</p>
+							<p class="card-text"><b>Remediation Time: </b>{{ data['cc_data']['tech_debt_remediation'] }}</p>
+							<p class="card-text"><b>Implementation Time: </b>{{ data['cc_data']['tech_debt_implementation'] }}</p>
+						</div>
+					{% else %}
+						<br>No data<br><br>
+					{% endif %}
+				</div>
+
+			</div>
+			{% endif %}
+		</center>
+
+
+</div>
+{% endblock %}
