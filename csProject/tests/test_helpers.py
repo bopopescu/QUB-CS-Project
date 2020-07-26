@@ -3,7 +3,7 @@ from flask import current_app as app
 from base import BaseTestCase
 from app.extensions import db
 from app.models import Archive, User, OAuth
-from app.constants import slave_username
+from app.constants import subordinate_username
 from app.main.helpers import *
 from datetime import datetime, date, timedelta
 import os

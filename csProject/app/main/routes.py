@@ -8,7 +8,7 @@ import forms
 import code_climate
 import analysis_functions
 from github import Github
-from ..constants import github_api_url_base, github_headers, slave_username
+from ..constants import github_api_url_base, github_headers, subordinate_username
 from data_dict import supported_languages
 from ..extensions import db
 from ..models import Code_Climate, Archive, CK, CK_Class, Github_Stats
@@ -128,7 +128,7 @@ def run_archive_task():
 
 				# add to code climate
 				name = db.session.query(Archive).filter_by(github_slug=github_slug).first().name
-				cc_slug = slave_username + '/' + name + str(timestamp).replace('-','')
+				cc_slug = subordinate_username + '/' + name + str(timestamp).replace('-','')
 				cc_job = q.enqueue('app.tasks.add_repo_to_cc', cc_slug, timestamp, timeout=999999)
 
 				# wait for job to finish successfully before moving to the next stage of analysis
@@ -446,8 +446,8 @@ def change_language():
 		repository = git.Repo(os.path.join(os.path.dirname(os.getcwd()), archive_folder))
 		repository.index.add([gitattributes])
 		repository.index.commit(message='Adding gitattributes file.')
-		url = 'git@github.com:' + slave_username + '/' + repo + timestamp.replace('-','') + '.git'
-		repository.git.push(url, 'HEAD:master')
+		url = 'git@github.com:' + subordinate_username + '/' + repo + timestamp.replace('-','') + '.git'
+		repository.git.push(url, 'HEAD:main')
 
 		# update db
 		row = db.session.query(Archive).filter_by(archive_folder=archive_folder).all()
