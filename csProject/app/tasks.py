@@ -1,5 +1,5 @@
 from main.helpers import create_archive, get_time_intervals, get_sha, get_user_token, delete_file, get_repo_language, create_json_file
-from constants import github_api_url_base, codeclimate_token, slave_token as s_token, slave_username as s_user
+from constants import github_api_url_base, codeclimate_token, subordinate_token as s_token, subordinate_username as s_user
 from main.data_dict import ck_thresholds
 import pygit2
 import git
@@ -41,7 +41,7 @@ def store_archive_info(url, timestamp, archive_folder, token):
 
 def archive_repository(download_folder, url, github_slug, timestamp, token):
 	''' Download previous versions of the chosen repository at the specified
-	intervals and commit these to slave account for future analysis '''
+	intervals and commit these to subordinate account for future analysis '''
 	sha = get_sha(github_slug, timestamp, token)
 
 	if sha:
@@ -265,7 +265,7 @@ def init_repo(oid, download_path):
 	shutil.rmtree(os.path.join(download_path, '.git'))
 
 def create_bare_repo(repo_name):
-	''' Create empty repository with descriptive name on slave github account.
+	''' Create empty repository with descriptive name on subordinate github account.
 	Returns url of new repostiory or None if unsuccessful '''
 	api_url = '{}user/repos'.format(github_api_url_base)
 	headers = {'Authorization': 'token %s' % s_token}
@@ -279,7 +279,7 @@ def create_bare_repo(repo_name):
 		print response.text
 
 def commit_files(bare_url, download_path):
-	''' Commit and push files to repository on slave account for future analysis '''
+	''' Commit and push files to repository on subordinate account for future analysis '''
 	file_list = []
 	for (dirpath, dirnames, filenames) in os.walk(download_path):
 		if '.git' not in dirpath:
@@ -289,7 +289,7 @@ def commit_files(bare_url, download_path):
 		repo = git.Repo.init(download_path)
 		repo.index.add(file_list)
 		repo.index.commit(message='Initial commit')
-		repo.git.push(bare_url, 'HEAD:master')
+		repo.git.push(bare_url, 'HEAD:main')
 	except:
 		print 'Failed to commit to {}'.format(bare_url)
 	print 'Committed successfully to {}'.format(bare_url)

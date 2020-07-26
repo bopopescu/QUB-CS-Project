@@ -21,7 +21,7 @@ class TestUser():
 
 	def __init__(self):
 		self.id = 1
-		self.username = 'slaveuser'
+		self.username = 'subordinateuser'
 		self.provider = 'github'
 		self.created_at = datetime.now()
 		self.token = {"access_token": "91a43d39637f8d3f566411d834044a6f39b58037", "token_type": "bearer", "scope": [""]}

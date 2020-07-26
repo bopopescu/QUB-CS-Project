@@ -5,7 +5,7 @@ from ..models import OAuth, Code_Climate, Archive
 from ..extensions import db
 from dateutil.relativedelta import relativedelta
 from datetime import date
-from ..constants import github_api_url_base, slave_username
+from ..constants import github_api_url_base, subordinate_username
 
 def get_user_token():
 	''' Returns the GitHub OAuth token of the current authenticated user '''

@@ -2,7 +2,7 @@ from flask import flash
 from .helpers import create_json_file, delete_file#, update_codeclimate_table
 from ..models import Code_Climate, Archive
 from ..extensions import db
-from ..constants import codeclimate_token, slave_username
+from ..constants import codeclimate_token, subordinate_username
 from .data_dict import file_ext_dict
 from datetime import timedelta, date
 from collections import defaultdict
